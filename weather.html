@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather — What’s the weather?</title>
+  <meta name="description" content="Live temperature, conditions and a 3-day forecast for any city — powered by Open-Meteo. Search in Chinese or English." />
+  <meta name="author" content="Yuxin Guo" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%23e07856'/%3E%3Ctext x='50' y='68' font-family='Arial,sans-serif' font-size='52' font-weight='bold' text-anchor='middle' fill='%23ffffff'%3EYG%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.font.im" />
+  <link rel="preconnect" href="https://fonts.gstatic.font.im" crossorigin />
+  <link href="https://fonts.font.im/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ============ Header / Navigation ============ -->
+  <header class="site-header" id="site-header">
+    <div class="container nav-inner">
+      <a href="index.html" class="logo" aria-label="Yuxin Guo — home">
+        <span class="logo-mark" aria-hidden="true">YG</span>
+        <span class="logo-text">Yuxin&nbsp;Guo</span>
+      </a>
+
+      <nav class="site-nav" id="site-nav" aria-label="Primary">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="resume.html" class="nav-link">Resume</a>
+        <a href="projects.html" class="nav-link">Projects</a>
+        <a href="contact.html" class="nav-link nav-cta">Contact Me</a>
+      </nav>
+
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="site-nav">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ============ Weather App ============ -->
+  <main>
+    <section class="section page-hero" id="weather-app-section">
+      <div class="container">
+        <header class="section-head reveal">
+          <span class="eyebrow">Project · Weather</span>
+          <h2>What&rsquo;s the weather?</h2>
+          <p>Enter any city (English or Chinese) and hit Search to see its live temperature, conditions and weather icon.</p>
+        </header>
+
+        <div class="weather-app reveal">
+          <div class="weather-toolbar">
+            <div class="weather-unit-toggle" id="weather-unit-toggle" role="group" aria-label="Temperature unit">
+              <button type="button" class="weather-unit-btn" data-unit="C">℃</button>
+              <button type="button" class="weather-unit-btn" data-unit="F">℉</button>
+            </div>
+          </div>
+
+          <form class="weather-search" id="weather-form" novalidate>
+            <input
+              type="text"
+              id="weather-city"
+              class="weather-input"
+              placeholder="Enter a city, e.g. Suzhou / 苏州"
+              aria-label="City name"
+              autocomplete="off"
+            />
+            <button type="submit" id="weather-search-btn" class="weather-search-btn">Search</button>
+          </form>
+
+          <div class="weather-result" id="weather-result" aria-live="polite">
+            <div class="weather-panel weather-hint">
+              <span class="weather-hint-emoji" aria-hidden="true">🌈</span>
+              <p>Search for a city to see its weather!</p>
+            </div>
+          </div>
+
+          <div class="weather-saved" id="weather-saved" hidden>
+            <p class="weather-saved-title">Saved cities</p>
+            <ul class="weather-saved-list" id="weather-saved-list"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ Footer ============ -->
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; <span id="year"></span> Yuxin Guo · Built with care for curiosity.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

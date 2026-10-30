@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mechanics Phenomena Visualized — Physics Lab</title>
+  <meta name="description" content="An interactive N-body gravitation sandbox: planets attract, collide and merge, expand, and are launched by drag." />
+  <style>
+    /* ============================================================
+       Mechanics Phenomena Visualized — futuristic / techy theme
+       Fully self-contained. No frameworks, no external assets.
+       ============================================================ */
+    :root {
+      --bg-deep: #04060d;
+      --panel-bg: rgba(10, 16, 32, 0.72);
+      --panel-border: rgba(90, 200, 255, 0.22);
+      --cyan: #57d6ff;
+      --cyan-dim: rgba(87, 214, 255, 0.45);
+      --text: #cfe9ff;
+      --text-dim: rgba(207, 233, 255, 0.55);
+      --accent-red: #ff5a3c;
+      --mono: "SF Mono", "Cascadia Code", ui-monospace, Menlo, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: "Inter", "Segoe UI", Roboto, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(30, 70, 130, 0.35), transparent 60%),
+        linear-gradient(180deg, #070b18 0%, #04060d 100%);
+      color: var(--text);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---------- Title bar ---------- */
+    .title-bar {
+      position: relative;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      background: rgba(7, 12, 26, 0.85);
+      border-bottom: 1px solid var(--panel-border);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 30px -18px rgba(87, 214, 255, 0.5);
+      z-index: 20;
+    }
+
+    .title-bar::before,
+    .title-bar::after {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 12px var(--cyan), 0 0 3px var(--cyan);
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+    .title-bar::after { animation-delay: 1.2s; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.35; transform: scale(0.8); }
+      50%      { opacity: 1;    transform: scale(1.15); }
+    }
+
+    .projector {
+      display: block;
+    }
+
+    .title-bar h1 {
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.34em;
+      text-transform: uppercase;
+      color: #eaf7ff;
+      white-space: nowrap;
+      text-shadow: 0 0 18px rgba(87, 214, 255, 0.55);
+    }
+
+    /* ---------- Stage / canvas ---------- */
+    .stage {
+      position: absolute;
+      inset: 56px 0 0 0;
+    }
+
+    #scene {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: #050810;
+      cursor: crosshair;
+    }
+
+    /* ---------- Overlay HUD ---------- */
+    .hud { position: absolute; z-index: 10; }
+
+    /* Ball counter (top-right) */
+    #count {
+      top: 14px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      color: var(--cyan);
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 999px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    #count b {
+      font-size: 14px;
+      color: #fff;
+    }
+
+    /* Control panel (top-left) */
+    .panel {
+      top: 14px;
+      left: 16px;
+      width: 214px;
+      padding: 14px 14px 12px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255,255,255,0.06);
+      pointer-events: auto;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--cyan-dim);
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(90, 200, 255, 0.12);
+    }
+    .panel-title .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
+    }
+
+    .ctl { margin-bottom: 12px; }
+
+    .ctl-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: var(--text);
+      letter-spacing: 0.02em;
+      margin-bottom: 6px;
+    }
+    .ctl-label .val {
+      font-family: var(--mono);
+      color: var(--cyan);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, rgba(87,214,255,0.55), rgba(87,214,255,0.15));
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: #eaf7ff;
+      border: 2px solid var(--cyan);
+      box-shadow: 0 0 12px rgba(87,214,255,0.8);
+      cursor: pointer;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: #eaf7ff;
+      border: 2px solid var(--cyan);
+      box-shadow: 0 0 12px rgba(87,214,255,0.8);
+      cursor: pointer;
+    }
+
+    /* Toggle switch */
+    .toggles { display: grid; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(90,200,255,0.12); }
+    .tgl {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .tgl input { position: absolute; opacity: 0; pointer-events: none; }
+    .switch {
+      position: relative;
+      width: 32px; height: 18px;
+      border-radius: 99px;
+      background: rgba(140,170,210,0.22);
+      border: 1px solid rgba(90,200,255,0.25);
+      transition: background 0.2s ease, border-color 0.2s ease;
+      flex: none;
+    }
+    .switch::after {
+      content: "";
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: #a9c9e8;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .tgl input:checked + .switch {
+      background: rgba(87,214,255,0.35);
+      border-color: var(--cyan);
+    }
+    .tgl input:checked + .switch::after {
+      transform: translateX(14px);
+      background: #eaf7ff;
+      box-shadow: 0 0 8px rgba(87,214,255,0.9);
+    }
+
+    /* Buttons */
+    .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      color: var(--text);
+      background: rgba(140,170,210,0.10);
+      border: 1px solid rgba(90,200,255,0.22);
+      border-radius: 9px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      font-family: inherit;
+    }
+    .btn:hover { background: rgba(87,214,255,0.16); border-color: var(--cyan); }
+    .btn:active { transform: translateY(1px); }
+    .btn-2 { grid-column: span 2; }
+    .btn-outline {
+      border-color: rgba(255,90,60,0.5);
+      color: #ffb3a6;
+    }
+    .btn-outline:hover { background: rgba(255,90,60,0.14); border-color: var(--accent-red); }
+    .btn-ghost { color: var(--text-dim); }
+    .btn-ghost:hover { color: var(--text); }
+    .btn.is-paused {
+      background: rgba(255,202,80,0.16);
+      border-color: rgba(255,202,80,0.6);
+      color: #ffe9ad;
+    }
+    #btn-pause .spacer { display: none; }
+    #btn-pause.is-paused .pause-ic { display: none; }
+    #btn-pause.is-paused .play-ic { display: inline; }
+
+    /* Instruction hint (bottom center) */
+    #hint {
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: var(--text-dim);
+      background: rgba(7, 12, 26, 0.6);
+      border: 1px solid rgba(90,200,255,0.16);
+      border-radius: 999px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      white-space: nowrap;
+    }
+    #hint .pulse {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    #hint kbd {
+      display: inline-block;
+      padding: 1px 6px;
+      border: 1px solid rgba(90,200,255,0.3);
+      border-bottom-width: 2px;
+      border-radius: 5px;
+      color: var(--cyan);
+      font-family: var(--mono);
+      font-size: 10px;
+    }
+
+    /* Responsive: shrink panel on small screens */
+    @media (max-width: 560px) {
+      .title-bar h1 { font-size: 12px; letter-spacing: 0.22em; }
+      .panel { width: 176px; padding: 11px 11px 10px; }
+      .btns { grid-template-columns: 1fr; }
+      .btn-2 { grid-column: span 1; }
+      .ctl-label { font-size: 10.5px; }
+      #hint { font-size: 10px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .title-bar::before, .title-bar::after, #hint .pulse { animation: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="title-bar">
+    <span class="projector" aria-hidden="true"></span>
+    <h1>Mechanics&nbsp;Phenomena&nbsp;Visualized</h1>
+    <span class="projector" aria-hidden="true"></span>
+  </div>
+
+  <div class="stage">
+    <canvas id="scene"></canvas>
+
+    <!-- Ball counter (top-right) -->
+    <div class="hud" id="count" aria-live="polite">
+      <span>BODIES</span>
+      <b id="count-num">0</b>
+    </div>
+
+    <!-- Control panel (top-left) -->
+    <div class="hud panel" id="panel">
+      <div class="panel-title"><span class="dot"></span>Field Controls</div>
+
+      <div class="ctl">
+        <label class="ctl-label" for="gravity">Gravity <span class="val" id="g-val">1.0</span></label>
+        <input type="range" id="gravity" min="0" max="4" step="0.1" value="1">
+      </div>
+
+      <div class="ctl">
+        <label class="ctl-label" for="expansion">Expansion <span class="val" id="e-val">0.00</span></label>
+        <input type="range" id="expansion" min="0" max="0.3" step="0.01" value="0">
+      </div>
+
+      <div class="ctl">
+        <label class="ctl-label" for="newmass">New Mass <span class="val" id="m-val">100</span></label>
+        <input type="range" id="newmass" min="10" max="800" step="10" value="100">
+      </div>
+
+      <div class="toggles">
+        <label class="tgl">
+          Motion trails
+          <input type="checkbox" id="trails" checked>
+          <span class="switch"></span>
+        </label>
+        <label class="tgl">
+          Merge on collision
+          <input type="checkbox" id="merge" checked>
+          <span class="switch"></span>
+        </label>
+      </div>
+
+      <div class="btns">
+        <button class="btn btn-ghost" id="btn-pause" type="button">
+          <span class="pause-ic">&#10074;&#10074;</span>
+          <span class="play-ic">&#9654;</span>
+          Pause
+        </button>
+        <button class="btn btn-outline" id="btn-clear" type="button">Clear</button>
+        <button class="btn btn-2" id="btn-galaxy" type="button">Galaxy</button>
+        <button class="btn btn-2 btn-ghost" id="btn-binary" type="button">Binary</button>
+      </div>
+    </div>
+
+    <!-- Instruction hint (bottom center) -->
+    <div class="hud" id="hint">
+      <span class="pulse"></span>
+      Drag to launch a body — Click to place at rest — sliders tune G &amp; expansion
+    </div>
+  </div>
+
+  <script>
+    "use strict";
+
+    var canvas = document.getElementById("scene");
+    var ctx = canvas.getContext("2d");
+
+    var W = 0, H = 0;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var cx = 0, cy = 0;
+
+    function resize() {
+      var stage = canvas.parentElement;
+      W = stage.clientWidth;
+      H = stage.clientHeight;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cx = W / 2;
+      cy = H / 2;
+      buildStars();
+    }
+
+    /* ---------- Physics constants ---------- */
+    var G_BASE = 300;
+    var SOFT = 100;          // softening term (px^2) to avoid singularities
+    var TRAIL_LEN = 42;
+
+    var gravity = 1;
+    var expansion = 0;
+    var newMass = 100;
+    var trailsOn = true;
+    var mergeOn = true;
+    var paused = false;
+
+    var bodies = [];
+
+    function effectiveG() { return G_BASE * gravity; }
+
+    function radiusOf(m) { return 2.2 + Math.cbrt(m) * 0.55; }
+
+    function addBody(x, y, vx, vy, m, rr) {
+      bodies.push({ x: x, y: y, vx: vx, vy: vy, m: m, r: rr || radiusOf(m), trail: [] });
+    }
+
+    function removeBody(idx) {
+      bodies.splice(idx, 1);
+    }
+
+    function updateCount() {
+      document.getElementById("count-num").textContent = bodies.length;
+    }
+
+    /* ---------- Background stars (pre-rendered once) ---------- */
+    var starBg = document.createElement("canvas");
+    function buildStars() {
+      starBg.width = Math.max(2, Math.floor(W));
+      starBg.height = Math.max(2, Math.floor(H));
+      var sctx = starBg.getContext("2d");
+      sctx.clearRect(0, 0, starBg.width, starBg.height);
+      var count = Math.floor((W * H) / 2600);
+      for (var i = 0; i < count; i++) {
+        var x = Math.random() * starBg.width;
+        var y = Math.random() * starBg.height;
+        var r = Math.random() * 0.9 + 0.2;
+        var a = Math.random() * 0.5 + 0.15;
+        sctx.beginPath();
+        sctx.arc(x, y, r, 0, Math.PI * 2);
+        sctx.fillStyle = "rgba(190,220,255," + a + ")";
+        sctx.fill();
+      }
+    }
+
+    /* ---------- Rendering ---------- */
+    function bodyColor(body) {
+      // Map radius onto a palette: small = bluish-white, large = reddish.
+      var t = Math.min(1, (body.r / 14));
+      var r = Math.round(188 + (255 - 188) * t);
+      var g = Math.round(222 + (84 - 222) * t);
+      var b = Math.round(255 + (48 - 255) * t);
+      return "rgb(" + r + "," + g + "," + b + ")";
+    }
+
+    // Semi-transparent variant used for the wide outer halo on large bodies.
+    function glowRGBA(body, alpha) {
+      var t = Math.min(1, (body.r / 14));
+      var r = Math.round(225 + (255 - 225) * t);
+      var g = Math.round(232 + (92 - 232) * t);
+      var b = Math.round(255 + (72 - 255) * t);
+      return "rgba(" + r + "," + g + "," + b + "," + alpha + ")";
+    }
+
+    function render(pointer) {
+      if (trailsOn) {
+        // Fade leftover glow, keep static stars crisp by redrawing them.
+        ctx.fillStyle = "rgba(5,8,16,0.30)";
+        ctx.fillRect(0, 0, W, H);
+      } else {
+        ctx.fillStyle = "#050810";
+        ctx.fillRect(0, 0, W, H);
+      }
+      ctx.drawImage(starBg, 0, 0, W, H);
+
+      // Trails
+      if (trailsOn) {
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        for (var i = 0; i < bodies.length; i++) {
+          var b = bodies[i];
+          if (b.trail.length < 3) continue;
+          ctx.globalCompositeOperation = "lighter";
+          var n = b.trail.length;
+          for (var s = 1; s < n; s++) {
+            var p0 = b.trail[s - 1];
+            var p1 = b.trail[s];
+            ctx.strokeStyle = "rgba(120,190,255," + (s / n) * 0.35 + ")";
+            ctx.lineWidth = Math.max(0.6, b.r * 0.5 * (s / n));
+            ctx.beginPath();
+            ctx.moveTo(p0.x, p0.y);
+            ctx.lineTo(p1.x, p1.y);
+            ctx.stroke();
+          }
+          ctx.globalCompositeOperation = "source-over";
+        }
+      }
+
+      // Bodies with a soft glow
+      ctx.globalCompositeOperation = "lighter";
+      for (var j = 0; j < bodies.length; j++) {
+        var B = bodies[j];
+        var col = bodyColor(B);
+        // Wide soft halo so the biggest body reads as the visual main subject
+        if (B.r >= 16) {
+          var halo = ctx.createRadialGradient(B.x, B.y, B.r * 0.2, B.x, B.y, B.r * 3.6);
+          halo.addColorStop(0, glowRGBA(B, 0.32));
+          halo.addColorStop(1, glowRGBA(B, 0));
+          ctx.fillStyle = halo;
+          ctx.beginPath();
+          ctx.arc(B.x, B.y, B.r * 3.6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.shadowColor = col;
+        ctx.shadowBlur = Math.max(8, B.r * 2.2);
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.arc(B.x, B.y, B.r, 0, Math.PI * 2);
+        ctx.fill();
+        // brighter core
+        ctx.shadowBlur = Math.max(5, B.r * 1.1);
+        ctx.fillStyle = "rgba(255,255,255,0.6)";
+        ctx.beginPath();
+        ctx.arc(B.x, B.y, Math.max(0.9, B.r * 0.4), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.shadowBlur = 0;
+      ctx.globalCompositeOperation = "source-over";
+
+      // Drag preview
+      if (pointer && pointer.down) {
+        var dx = pointer.x - pointer.sx;
+        var dy = pointer.y - pointer.sy;
+        var dist = Math.hypot(dx, dy);
+        if (dist > 3) {
+          ctx.save();
+          ctx.strokeStyle = "rgba(87,214,255,0.9)";
+          ctx.shadowColor = "rgba(87,214,255,0.9)";
+          ctx.shadowBlur = 12;
+          ctx.setLineDash([6, 6]);
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.moveTo(pointer.sx, pointer.sy);
+          ctx.lineTo(pointer.x, pointer.y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = "rgba(87,214,255,0.9)";
+          // arrowhead
+          var ang = Math.atan2(dy, dx);
+          var as = 8;
+          ctx.shadowBlur = 0;
+          ctx.beginPath();
+          ctx.moveTo(pointer.x, pointer.y);
+          ctx.lineTo(pointer.x - as * Math.cos(ang - 0.5), pointer.y - as * Math.sin(ang - 0.5));
+          ctx.lineTo(pointer.x - as * Math.cos(ang + 0.5), pointer.y - as * Math.sin(ang + 0.5));
+          ctx.closePath();
+          ctx.fill();
+          // ghost body at slingshot origin
+          ctx.fillStyle = "rgba(87,214,255,0.25)";
+          ctx.beginPath();
+          ctx.arc(pointer.sx, pointer.sy, radiusOf(newMass), 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+    }
+
+    /* ---------- Physics step ---------- */
+    function step(dt) {
+      var g = effectiveG();
+
+      // --- pair-wise gravity (accelerations) ---
+      for (var i = 0; i < bodies.length; i++) {
+        var a = bodies[i];
+        for (var j = i + 1; j < bodies.length; j++) {
+          var b = bodies[j];
+          var dx = b.x - a.x;
+          var dy = b.y - a.y;
+          var d2 = dx * dx + dy * dy + SOFT;
+          var d = Math.sqrt(d2);
+          var inv = g / (d2 * d);
+          var ax = dx * inv;
+          var ay = dy * inv;
+          a.vx += b.m * ax * dt; a.vy += b.m * ay * dt;
+          b.vx -= a.m * ax * dt; b.vy -= a.m * ay * dt;
+        }
+      }
+
+      // --- universe expansion (Hubble-like: outward radial push) ---
+      if (expansion > 0) {
+        for (var k = 0; k < bodies.length; k++) {
+          var e = bodies[k];
+          var rx = e.x - cx;
+          var ry = e.y - cy;
+          e.vx += rx * expansion * dt;
+          e.vy += ry * expansion * dt;
+        }
+      }
+
+      // --- integrate ---
+      for (var m2 = 0; m2 < bodies.length; m2++) {
+        var p = bodies[m2];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        // trail
+        p.trail.push({ x: p.x, y: p.y });
+        if (p.trail.length > TRAIL_LEN) p.trail.shift();
+      }
+
+      // --- collisions (merge) ---
+      if (mergeOn && bodies.length > 1) {
+        var removed = [];
+        var checked = new Array(bodies.length).fill(false);
+        for (var i2 = 0; i2 < bodies.length; i2++) {
+          if (checked[i2] || removed[i2]) continue;
+          var A = bodies[i2];
+          for (var j2 = i2 + 1; j2 < bodies.length; j2++) {
+            if (checked[j2] || removed[j2]) continue;
+            var B = bodies[j2];
+            var rr = A.r + B.r;
+            var dx2 = B.x - A.x;
+            var dy2 = B.y - A.y;
+            if (dx2 * dx2 + dy2 * dy2 <= rr * rr) {
+              // merge B into A (momentum + mass conserved)
+              var totalM = A.m + B.m;
+              A.x = (A.x * A.m + B.x * B.m) / totalM;
+              A.y = (A.y * A.m + B.y * B.m) / totalM;
+              A.vx = (A.vx * A.m + B.vx * B.m) / totalM;
+              A.vy = (A.vy * A.m + B.vy * B.m) / totalM;
+              A.m = totalM;
+              A.r = radiusOf(totalM);
+              removed[j2] = true;
+              checked[j2] = true;
+            }
+            checked[j2] = true;
+          }
+        }
+        if (removed.some(Boolean)) {
+          bodies = bodies.filter(function (_, idx) { return !removed[idx]; });
+        }
+      }
+    }
+
+    /* ---------- Scenes ---------- */
+    function rand(min, max) { return min + Math.random() * (max - min); }
+
+    function addOrbit(massA, n, rMin, rMax, mMin, mMax) {
+      var g = effectiveG();
+      for (var i = 0; i < n; i++) {
+        var ang = rand(0, Math.PI * 2);
+        var r = rand(rMin, rMax);
+        var m = rand(mMin, mMax);
+
+        // Most bodies get a small eccentricity (smooth, gentle ellipse);
+        // a minority get a wider one so we can show perturbations.
+        var e;
+        if (Math.random() < 0.8) {
+          e = rand(0, 0.18);
+        } else {
+          e = rand(0.35, 0.5);
+        }
+
+        // Keplerian velocity at periapsis (vis-viva): v = sqrt(G·M·(1+e)/r).
+        // Placing every body at its periapsis with purely tangential velocity
+        // makes each 2-body orbit bounded: it swings outward to apoapsis and
+        // returns — so it never crashes into the star and never escapes.
+        var v = Math.sqrt(g * massA * (1 + e) / r);
+        var x = cx + Math.cos(ang) * r;
+        var y = cy + Math.sin(ang) * r;
+        var vx = -Math.sin(ang) * v;
+        var vy =  Math.cos(ang) * v;
+
+        // Tiny radial wobble: negligible for the smooth majority, but combined
+        // with a large e it visibly perturbs the irregular few.
+        var wobble = (e < 0.2) ? 0.15 : 1;
+        vx += rand(-3, 3) * wobble;
+        vy += rand(-3, 3) * wobble;
+
+        addBody(x, y, vx, vy, m);
+      }
+    }
+
+    function spawnGalaxy() {
+      bodies = [];
+      var M = 22000;   // heavy central star
+      var R = 28;      // larger radius so it dominates the scene as the main subject
+      addBody(cx, cy, 0, 0, M, R);
+      addOrbit(M, 18, 80, Math.min(W, H) * 0.46, 45, 240);
+      updateCount();
+    }
+
+    function spawnBinary() {
+      bodies = [];
+      // Two heavy stars, close in mass to the galaxy's central star.
+      var M1 = 20000, M2 = 20000;
+      var R = 26;        // large radius + generous halo, like the galaxy star
+      // Wide separation so the circular mutual orbit is stable: the two
+      // centres stay exactly `sep` apart, and sep (240) >> r1+r2 (52),
+      // so they orbit each other cleanly instead of colliding and merging.
+      var sep = 240;
+      var g = effectiveG();
+      var total = M1 + M2;
+      var d1 = sep * M2 / total;   // M1's distance from COM
+      var d2 = sep * M1 / total;   // M2's distance from COM
+      var w = Math.sqrt(g * total / (sep * sep * sep));
+      var v1 = w * d1, v2 = w * d2;
+      addBody(cx - d1, cy, 0,  v1, M1, R);
+      addBody(cx + d2, cy, 0, -v2, M2, R);
+      // asteroids orbiting the pair's COM
+      addOrbit(total, 26, 180, Math.min(W, H) * 0.49, 12, 90);
+      updateCount();
+    }
+
+    /* ---------- Loops ---------- */
+    var last = performance.now();
+    var pointer = null;
+
+    function frame(time) {
+      var dms = Math.min(time - last, 50);
+      last = time;
+      if (!paused) {
+        var dt = Math.max(1e-4, dms / 1000);
+        // substep for stability at high gravity
+        var steps = 1;
+        if (dms > 26) steps = 2;
+        for (var s = 0; s < steps; s++) {
+          step(dt / steps);
+        }
+      }
+      render(pointer);
+      requestAnimationFrame(frame);
+    }
+
+    /* ---------- Sliders & toggles ---------- */
+    var gravityEl = document.getElementById("gravity");
+    var expansionEl = document.getElementById("expansion");
+    var massEl = document.getElementById("newmass");
+    var trailsEl = document.getElementById("trails");
+    var mergeEl = document.getElementById("merge");
+    var pauseBtn = document.getElementById("btn-pause");
+
+    function showVal(el, value, digits) {
+      var f = Number(value);
+      if (typeof digits === "number") f = f.toFixed(digits);
+      el.textContent = f;
+    }
+
+    gravityEl.addEventListener("input", function () {
+      gravity = parseFloat(gravityEl.value);
+      showVal(document.getElementById("g-val"), gravity, 2);
+    });
+    expansionEl.addEventListener("input", function () {
+      expansion = parseFloat(expansionEl.value);
+      showVal(document.getElementById("e-val"), expansion, 2);
+    });
+    massEl.addEventListener("input", function () {
+      newMass = parseInt(massEl.value, 10);
+      document.getElementById("m-val").textContent = newMass;
+    });
+    trailsEl.addEventListener("change", function () { trailsOn = trailsEl.checked; });
+    mergeEl.addEventListener("change", function () { mergeOn = mergeEl.checked; });
+
+    pauseBtn.addEventListener("click", function () {
+      paused = !paused;
+      this.classList.toggle("is-paused", paused);
+      this.innerHTML = paused
+        ? '<span class="pause-ic">&#9654;</span> Resume'
+        : '<span class="pause-ic">&#10074;&#10074;</span> Pause';
+    });
+
+    document.getElementById("btn-clear").addEventListener("click", function () {
+      bodies = [];
+      updateCount();
+    });
+    document.getElementById("btn-galaxy").addEventListener("click", spawnGalaxy);
+    document.getElementById("btn-binary").addEventListener("click", spawnBinary);
+
+    /* ---------- Pointer: slingshot launch / place at rest ---------- */
+    function getPos(ev) {
+      var rect = canvas.getBoundingClientRect();
+      return { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+    }
+
+    canvas.addEventListener("pointerdown", function (ev) {
+      ev.preventDefault();
+      canvas.setPointerCapture(ev.pointerId);
+      var p = getPos(ev);
+      pointer = { sx: p.x, sy: p.y, x: p.x, y: p.y, id: ev.pointerId, active: true };
+    });
+
+    canvas.addEventListener("pointermove", function (ev) {
+      if (!pointer || ev.pointerId !== pointer.id) return;
+      var p = getPos(ev);
+      pointer.x = p.x;
+      pointer.y = p.y;
+    });
+
+    canvas.addEventListener("pointerup", function (ev) {
+      if (!pointer || ev.pointerId !== pointer.id) return;
+      var p = getPos(ev);
+      var dx = p.x - pointer.sx;
+      var dy = p.y - pointer.sy;
+      var dist = Math.hypot(dx, dy);
+
+      if (dist < 6) {
+        // Click -> place a body at rest
+        addBody(pointer.sx, pointer.sy, 0, 0, newMass);
+      } else {
+        // Drag -> slingshot: launch in the drag direction, faster = farther
+        var k = 2.7;
+        addBody(pointer.sx + dx * 0.25, pointer.sy + dy * 0.25, dx * k, dy * k, newMass);
+      }
+      pointer = null;
+      updateCount();
+    });
+
+    canvas.addEventListener("pointercancel", function () { pointer = null; });
+
+    /* ---------- Init ---------- */
+    resize();
+    window.addEventListener("resize", resize);
+
+    showVal(document.getElementById("g-val"), gravity, 2);
+    showVal(document.getElementById("e-val"), expansion, 2);
+    document.getElementById("m-val").textContent = newMass;
+
+    // Auto-open the Galaxy scene.
+    spawnGalaxy();
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>

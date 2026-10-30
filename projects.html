@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Projects — Yuxin Guo</title>
+  <meta name="description" content="Selected projects by Yuxin Guo — study-skills courseware, interactive learning objects, a travel journal, and more." />
+  <meta name="author" content="Yuxin Guo" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%23e07856'/%3E%3Ctext x='50' y='68' font-family='Arial,sans-serif' font-size='52' font-weight='bold' text-anchor='middle' fill='%23ffffff'%3EYG%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.font.im" />
+  <link rel="preconnect" href="https://fonts.gstatic.font.im" crossorigin />
+  <link href="https://fonts.font.im/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="projects-page">
+
+  <!-- ============ Header / Navigation ============ -->
+  <header class="site-header" id="site-header">
+    <div class="container nav-inner">
+      <a href="index.html" class="logo" aria-label="Yuxin Guo — home">
+        <span class="logo-mark" aria-hidden="true">YG</span>
+        <span class="logo-text">Yuxin&nbsp;Guo</span>
+      </a>
+
+      <nav class="site-nav" id="site-nav" aria-label="Primary">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="resume.html" class="nav-link">Resume</a>
+        <a href="projects.html" class="nav-link is-active">Projects</a>
+        <a href="contact.html" class="nav-link nav-cta">Contact Me</a>
+      </nav>
+
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="site-nav">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main id="top">
+
+    <!-- ============ Page hero ============ -->
+    <section class="page-hero">
+      <div class="container">
+        <h1>Projects</h1>
+        <p>A collection of work I'm building and sharing. Check back soon for updates.</p>
+      </div>
+    </section>
+
+    <!-- ============ To-Do App ============ -->
+    <section class="section" id="todo-app-section">
+      <div class="container">
+        <header class="section-head reveal">
+          <span class="eyebrow">Project · To-Do List</span>
+          <h2>Plan your day</h2>
+          <p>Pick a date, type a task, and hit Add. Check the box when it's done, or tap the X to remove it.</p>
+        </header>
+
+        <div class="todo-app reveal">
+          <!-- Input row -->
+          <div class="todo-input-row">
+            <input type="date" id="todo-date" class="todo-date-input" aria-label="Task date" />
+            <input
+              type="text"
+              id="todo-text"
+              class="todo-text-input"
+              placeholder="What needs to be done?"
+              aria-label="Task description"
+            />
+            <button type="button" id="todo-add" class="btn btn-primary todo-add-btn">Add</button>
+          </div>
+
+          <!-- Emoji & priority picker -->
+          <div class="todo-picker-row">
+            <div class="todo-emoji-picker" role="group" aria-label="Pick an emoji">
+              <span class="todo-picker-label">Tag</span>
+              <div class="emoji-options" id="emoji-options">
+                <button type="button" class="emoji-btn is-selected" data-emoji="📌" aria-label="Pin">📌</button>
+                <button type="button" class="emoji-btn" data-emoji="💡" aria-label="Idea">💡</button>
+                <button type="button" class="emoji-btn" data-emoji="📚" aria-label="Study">📚</button>
+                <button type="button" class="emoji-btn" data-emoji="🔥" aria-label="Urgent">🔥</button>
+                <button type="button" class="emoji-btn" data-emoji="✅" aria-label="Routine">✅</button>
+                <button type="button" class="emoji-btn" data-emoji="🎉" aria-label="Fun">🎉</button>
+              </div>
+            </div>
+            <div class="todo-priority-picker" role="group" aria-label="Pick priority">
+              <span class="todo-picker-label">Priority</span>
+              <div class="priority-options" id="priority-options">
+                <button type="button" class="priority-btn" data-priority="low" aria-label="Low priority">Low</button>
+                <button type="button" class="priority-btn is-selected" data-priority="medium" aria-label="Medium priority">Medium</button>
+                <button type="button" class="priority-btn" data-priority="high" aria-label="High priority">High</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter tabs -->
+          <div class="todo-filters" role="tablist" aria-label="Filter tasks">
+            <button class="todo-filter is-active" data-filter="all" role="tab" aria-selected="true">All</button>
+            <button class="todo-filter" data-filter="active" role="tab" aria-selected="false">Active</button>
+            <button class="todo-filter" data-filter="done" role="tab" aria-selected="false">Done</button>
+          </div>
+
+          <!-- Offline / sync status -->
+          <p class="todo-status" id="todo-status" role="status" hidden></p>
+
+          <!-- Task list -->
+          <ul class="todo-list" id="todo-list"></ul>
+
+          <!-- Empty state -->
+          <p class="todo-empty" id="todo-empty">No tasks yet — let's add some magic! ✨</p>
+
+          <!-- Footer -->
+          <div class="todo-footer">
+            <span id="todo-count">0 tasks</span>
+            <button type="button" id="todo-clear" class="todo-clear">Clear completed</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Weather App ============ -->
+    <section class="section" id="weather-app-section">
+      <div class="container">
+        <header class="section-head reveal">
+          <span class="eyebrow">Project · Weather</span>
+          <h2>What&rsquo;s the weather?</h2>
+          <p>Enter any city and hit Search to see its live temperature, conditions and weather icon.</p>
+        </header>
+
+        <div class="weather-app reveal">
+          <div class="weather-toolbar">
+            <div class="weather-unit-toggle" id="weather-unit-toggle" role="group" aria-label="Temperature unit">
+              <button type="button" class="weather-unit-btn" data-unit="C">℃</button>
+              <button type="button" class="weather-unit-btn" data-unit="F">℉</button>
+            </div>
+          </div>
+
+          <form class="weather-search" id="weather-form" novalidate>
+            <input
+              type="text"
+              id="weather-city"
+              class="weather-input"
+              placeholder="Enter a city, e.g. Suzhou"
+              aria-label="City name"
+              autocomplete="off"
+            />
+            <button type="submit" id="weather-search-btn" class="weather-search-btn">Search</button>
+          </form>
+
+          <div class="weather-result" id="weather-result" aria-live="polite">
+            <div class="weather-panel weather-hint">
+              <span class="weather-hint-emoji" aria-hidden="true">🌈</span>
+              <p>Search for a city to see its weather!</p>
+            </div>
+          </div>
+
+          <div class="weather-saved" id="weather-saved" hidden>
+            <p class="weather-saved-title">Saved cities</p>
+            <ul class="weather-saved-list" id="weather-saved-list"></ul>
+          </div>
+
+          <div class="weather-actions">
+            <a
+              href="weather.html"
+              class="btn btn-primary"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Open full screen</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Physics Lab ============ -->
+    <section class="section" id="physics-section">
+      <div class="container">
+        <header class="section-head reveal">
+          <span class="eyebrow">Project · Mechanics Phenomena Visualized</span>
+          <h2>Draw gravity in real time</h2>
+          <p>
+            An interactive N-body sandbox for learning about gravitation: planets attract, collide and merge,
+            the universe can expand, and you can launch new bodies with a drag. Press Galaxy or Binary to load
+            a stable system, then tweak gravity, expansion and mass.
+          </p>
+        </header>
+
+        <div class="physics-holder reveal">
+          <div class="physics-frame">
+            <iframe
+              src="physics-lab.html"
+              title="Mechanics Phenomena Visualized — interactive gravity sandbox"
+              loading="lazy"
+              allow="pointer-lock; fullscreen"
+            ></iframe>
+          </div>
+          <div class="physics-actions">
+            <p class="physics-cap">Drag to launch a body · click to place it at rest · tweak the sliders in the top-left panel.</p>
+            <a href="physics-lab.html" class="btn btn-primary" target="_blank" rel="noopener noreferrer">Open full screen</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ English Word Quiz ============ -->
+    <section class="section" id="quiz-section">
+      <div class="container">
+        <header class="section-head reveal">
+          <span class="eyebrow">Project · English Word Quiz</span>
+          <h2>English Word Quiz</h2>
+          <p>An interactive vocabulary quiz for young learners.</p>
+        </header>
+
+        <div class="quiz-holder reveal">
+          <div class="quiz-frame">
+            <iframe
+              src="https://yuxinguo26.github.io/portfolio-English/"
+              title="English Word Quiz"
+              loading="lazy"
+              allow="fullscreen"
+            ></iframe>
+          </div>
+          <div class="quiz-actions">
+            <a
+              href="https://yuxinguo26.github.io/portfolio-English/"
+              class="btn btn-primary"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Open full screen</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ Footer ============ -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="fun-fact reveal">
+        <span class="ff-label">Fun fact</span>
+        <p>I enjoy iterating educational tools built with AI — half the fun lies in spotting and fixing unexpected behaviours.</p>
+      </div>
+      <div class="footer-inner">
+        <p>© <span id="year">2026</span> Yuxin Guo · <a class="footer-email" href="mailto:2984978189@qq.com">2984978189@qq.com</a></p>
+        <p class="footer-note">Built with HTML, CSS &amp; JavaScript</p>
+        <a href="#top" class="to-top">Back to top ↑</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js?v=20261016f" defer></script>
+</body>
+</html>
